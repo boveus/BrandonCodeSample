@@ -1,8 +1,8 @@
 import os
 
-
 from flask import Flask, flash, render_template, request, session
 from sqlalchemy.orm import sessionmaker
+
 from maketables import *
 
 engine = create_engine('sqlite:///user.db', echo=True)
@@ -19,19 +19,19 @@ def home():
 
 
 @app.route('/login', methods=['POST'])
-def do_login():
+def do_admin_login():
     username = str(request.form['username'])
     password = str(request.form['password'])
+
+    sql = ("SELECT password FROM USER \
+       WHERE USERNAME = '%s'" % (username))
 
     this_session = sessionmaker(bind=engine)
     s = this_session()
 
-    user = s.query(User).filter_by(username=username).first()
+    result = s.query(User).filter_by(username=username, password=password)
 
-    result = user.verify_password(password)
-
-    if result:
-        session['username'] = user.username
+    if result.first:
         session['logged_in'] = True
     else:
         flash('incorrect login!')
@@ -40,7 +40,6 @@ def do_login():
 
 @app.route("/logout")
 def logout():
-    session['username'] = None
     session['logged_in'] = False
     return home()
 
